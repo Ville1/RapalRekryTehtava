@@ -1,0 +1,94 @@
+﻿@page
+@model IndexModel
+@{ ViewData["Title"] = "Home page"; }
+
+<div id="tree">
+    <div>
+        <span id="root"></span><br />
+        <a href="#" id="0">[Lisää]</a>
+    </div>
+</div>
+
+<br /><br />
+<button class="btn btn-primary" id="clearButton">Tyhjennä</button>
+
+<style>
+    .node {
+        padding-left: 20px;
+    }
+</style>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        var current_id = 1;
+        var node_text = 'Noodi ';
+        var node_separator = '.';
+        var tree = {
+            root: {
+                id: 0,
+                parent: null,
+                text: node_text + current_id,
+                children: []
+            },
+            all: []
+        };
+        $('#root').html(tree.root.text);
+        $('#0').on('click', function () { add_node($(this)); });
+        $('#clearButton').on('click', function () { clear_all(); });
+        tree.all.push(tree.root);
+
+        var render_node_recursive = function (node) {
+            $('#' + node.parent.id).parent().append(
+                '<div class="node">' +
+                    '<span>' + node.text + '</span><br />' +
+                    '<a href="#" id="' + node.id +'">[Lisää]</a>' +
+                '</div>'
+            );
+            $('#' + node.id).on('click', function () { add_node($(this)); });
+            node.children.forEach(render_node_recursive);
+        };
+
+        var add_node = function (element) {
+            //Find parent node
+            var parent_id = parseInt(element.attr('id'));
+            var parent = null;
+            for (var i = 0; i < tree.all.length; i++) {
+                if (tree.all[i].id === parent_id) {
+                    parent = tree.all[i];
+                    break;
+                }
+            }
+            if (parent === null) {
+                //This should not happen
+                console.log('Parent with id ' + parent_id + 'does not exist');
+                return;
+            }
+            //Parse text
+            var node = {
+                id: current_id,
+                parent: parent,
+                text: node_text + parent.text.substring(node_text.length) + node_separator + (parent.children.length + 1),
+                children: []
+            }
+            current_id++;
+            //Add node & refresh
+            parent.children.push(node);
+            tree.all.push(node);
+            refresh();
+        }
+
+        var refresh = function () {
+            $('.node').remove();
+            tree.root.children.forEach(render_node_recursive);
+        }
+
+        var clear_all = function () {
+            current_id = 1;
+            tree.root.children = [];
+            tree.all = [tree.root];
+            refresh();
+        };
+
+        refresh();
+    });
+</script>
